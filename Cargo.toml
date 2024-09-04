@@ -6,7 +6,11 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-ratatui = { version = "0.28.0", features = ["crossterm"] }
+clap = "4.5.16"
+colored = "2.1.0"
+# ratatui = { version = "0.28.0", features = ["crossterm"] }
 reqwest = { version = "0.12.7", features = ["json"] }
 serde_json = "1.0.125"
+# termimad = "0.30.0"
+thiserror = "1.0.63"
 tokio = { version = "1.37.0", features = ["full"] }
