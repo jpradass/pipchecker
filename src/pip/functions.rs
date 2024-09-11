@@ -1,11 +1,9 @@
-use std::error;
-
 use tokio::{io::Error, process::Command};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct PipPkg {
-    name: String,
-    version: String,
+    pub name: String,
+    pub version: String,
 }
 
 pub async fn get_installed_pkgs_info() -> Result<Vec<PipPkg>, Error> {
@@ -32,4 +30,19 @@ pub async fn get_installed_pkgs_info() -> Result<Vec<PipPkg>, Error> {
         .collect();
 
     Ok(pip_pkgs)
+}
+
+pub async fn compare_versions(v1: &str, v2: &str) -> i32 {
+    let v1_splitted: Vec<i32> = v1.split(".").map(|v| v.parse::<i32>().unwrap()).collect();
+    let v2_splitted: Vec<i32> = v2.split(".").map(|v| v.parse::<i32>().unwrap()).collect();
+
+    for (version1, version2) in v1_splitted.iter().zip(v2_splitted.iter()) {
+        if version1 > version2 {
+            return -1;
+        } else if version2 > version1 {
+            return 1;
+        }
+    }
+
+    0
 }
