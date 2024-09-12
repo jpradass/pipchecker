@@ -17,19 +17,26 @@ use crate::{
 };
 
 #[derive(Debug)]
+pub enum PM {
+    UV,
+    Pip,
+}
+
+#[derive(Debug)]
 pub struct Cmd {
     root_cmd: Command,
+    package_manager: PM,
 }
 
 impl Cmd {
-    pub fn new() -> Cmd {
+    pub fn new(pm: PM) -> Cmd {
         Cmd {
             root_cmd: Command::new("pipchecker")
                 .about("Pip checker tool")
                 .subcommand_required(false)
                 .arg_required_else_help(true)
                 .subcommand(
-                    clap::Command::new("info")
+                    clap::Command::new("inspect")
                         .about("Get info of some package in Pypi")
                         .arg(arg!(<PKG_NAME> "package name"))
                         .arg_required_else_help(true),
@@ -38,13 +45,19 @@ impl Cmd {
                     clap::Command::new("check")
                         .about("Check for new version of installed packages")
                         .arg_required_else_help(false),
+                )
+                .subcommand(
+                    clap::Command::new("update")
+                        .about("Updates local packages for new ones")
+                        .arg_required_else_help(false),
                 ),
+            package_manager: pm,
         }
     }
 
     pub async fn execute(&self) {
         match self.root_cmd.clone().get_matches().subcommand() {
-            Some(("info", sub_matches)) => {
+            Some(("inspect", sub_matches)) => {
                 let pkg_name = sub_matches.get_one::<String>("PKG_NAME").expect("required");
                 // println!("Getting info of {}...", pkg_name);
                 // info!(format!("Getting info of {}...", pkg_name));
@@ -54,7 +67,9 @@ impl Cmd {
             }
             Some(("check", _sub_matches)) => {
                 // info!("Checking version of packages...");
-                if let Ok(pip_pkgs) = pip::functions::get_installed_pkgs_info().await {
+                if let Ok(pip_pkgs) =
+                    pip::functions::get_installed_pkgs_info(&self.package_manager).await
+                {
                     let start_time = Instant::now();
                     let spinner = ProgressBar::new_spinner();
                     spinner.set_message("Checking packages...");
@@ -112,6 +127,7 @@ impl Cmd {
                     }
                 }
             }
+            Some(("update", _sub_matches)) => {}
             _ => unreachable!(),
         }
     }

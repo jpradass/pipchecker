@@ -1,4 +1,4 @@
-use std::io;
+use tokio::process::Command;
 
 mod api;
 mod cmd;
@@ -7,26 +7,22 @@ mod menu;
 mod pip;
 mod read_req;
 
+use cmd::command::{Cmd, PM};
+
 #[tokio::main]
-async fn main() -> io::Result<()> {
-    match read_req::exists_requirements()? {
-        Some(_) => {
-            // println!("Found at {:?}", file.path());
-            // let pkgs: Vec<String> =
-            //     read_req::read_local_requirements(file.path().to_str().unwrap()).await;
-            // println!("{:?}", pkgs);
-            // let pypi = api::pypi::PypiApi::new();
-            // match pypi.get_pkg_info("requests").await {
-            //     Some(pkg) => {
-            //         // println!("{:?}", pkg.as_object().unwrap())
-            //         menu::display::display_pkg_info(pkg);
-            //     }
-            //     None => exit(1),
-            // };
-            let cmmd = cmd::command::Cmd::new();
-            cmmd.execute().await;
-        }
-        None => println!("File not found"),
+async fn main() {
+    match check_uv_installed().await {
+        Ok(_) => run_app(PM::UV).await,
+        Err(_) => run_app(PM::Pip).await,
     }
+}
+
+async fn check_uv_installed() -> Result<(), tokio::io::Error> {
+    let _ = Command::new("uv").args(["version"]).output().await?;
     Ok(())
+}
+
+async fn run_app(pm: PM) {
+    let command = Cmd::new(pm);
+    command.execute().await;
 }

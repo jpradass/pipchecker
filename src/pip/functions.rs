@@ -1,13 +1,18 @@
 use tokio::{io::Error, process::Command};
 
+use crate::cmd::command::PM;
+
 #[derive(Debug, Clone)]
 pub struct PipPkg {
     pub name: String,
     pub version: String,
 }
 
-pub async fn get_installed_pkgs_info() -> Result<Vec<PipPkg>, Error> {
-    let output = Command::new("uv").args(["pip", "freeze"]).output().await?;
+pub async fn get_installed_pkgs_info(package_manager: &PM) -> Result<Vec<PipPkg>, Error> {
+    let output = match package_manager {
+        PM::UV => Command::new("uv").args(["pip", "freeze"]).output().await?,
+        PM::Pip => Command::new("pip").args(["freeze"]).output().await?,
+    };
     let stdout = String::from_utf8_lossy(&output.stdout);
 
     let mut packages: Vec<&str> = stdout.split('\n').collect();
